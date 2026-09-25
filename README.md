@@ -13,6 +13,7 @@ Pathfinder is a local, AI-assisted job finder built with Streamlit. It loads the
 - AI Recommendations with semantic similarity, skill matching, missing skills, and reasons
 - Transparent match score: 60% semantic similarity, 25% skill similarity, 15% structured preference match
 - Cached local search index under `models/`
+- Feedback page that stores user ratings and comments locally
 - No API key or paid service required
 
 A match score is a similarity score between a profile and a job posting. It is not a hiring probability.
@@ -74,6 +75,10 @@ The first installation includes `sentence-transformers` and may download `all-Mi
 Each posting is converted into one searchable text document containing its title, category, skills, description, location, experience level, and employment type. The query is compared with those documents and ranked by similarity. Recommendations combine that ranking with detected skill overlap and structured preference matches.
 
 The generated cache is stored in `models/embeddings.npz` with metadata in `models/embeddings.json`. The cache is automatically rebuilt when the CSV content changes.
+
+Feedback submitted through the Feedback page is appended to `data/feedback.csv`.
+That file is intentionally ignored by Git because it may contain optional names
+and email addresses.
 
 To rebuild it manually, delete the generated files and restart Streamlit:
 

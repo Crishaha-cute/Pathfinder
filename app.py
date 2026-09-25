@@ -10,12 +10,14 @@ import streamlit as st
 from utils.analytics import dashboard_metrics, salary_by_category
 from utils.chatbot import answer_question
 from utils.data_loader import find_dataset, format_salary, load_jobs, non_empty_values
+from utils.feedback import save_feedback
 from utils.recommender import recommend_jobs
 from utils.semantic_search import build_or_load_index
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 MODELS_DIR = PROJECT_ROOT / "models"
+FEEDBACK_PATH = PROJECT_ROOT / "data" / "feedback.csv"
 
 st.set_page_config(page_title="Pathfinder | Job Finder", page_icon="◈", layout="wide", initial_sidebar_state="expanded")
 
@@ -49,7 +51,8 @@ st.markdown(
     .chat-assistant { background: #f1eee4; border-radius: 12px 12px 12px 3px; margin: 8px auto 8px 0; max-width: 92%; padding: 8px 10px; }
     .chat-label { color: var(--green); display: block; font-size: .68rem; font-weight: 700; margin-bottom: 3px; text-transform: uppercase; }
     div[data-testid='stPopoverBody'] input { border: 1px solid #b9c8bd; border-radius: 7px; }
-    div[data-testid='stFormSubmitButton'] button { border-radius: 50%; font-size: 1rem; height: 38px; min-height: 38px; padding: 0; width: 38px; }
+    div[data-testid='stFormSubmitButton'] button { border-radius: 6px; font-size: .82rem; height: auto; min-height: 0; padding: 5px 12px; width: auto; }
+    div[data-testid='stPopoverBody'] div[data-testid='stFormSubmitButton'] button { border-radius: 50%; font-size: 1rem; height: 38px; min-height: 38px; padding: 0; width: 38px; }
     [data-testid='stVerticalBlockBorderWrapper'] { background: white; border-color: var(--line); border-radius: 8px; padding: 10px 14px; }
     .job-card h3, [data-testid='stVerticalBlockBorderWrapper'] h3 { color: var(--green); margin: 3px 0; }
     .job-meta { color: #527b70; font-size: .8rem; margin: 2px 0; }
@@ -136,7 +139,7 @@ with header_brand:
 with header_navigation:
     page = st.radio(
         "Navigate",
-        ["Dashboard", "Find Jobs", "AI Recommendations", "Analytics"],
+        ["Dashboard", "Find Jobs", "AI Recommendations", "Analytics", "Feedback"],
         horizontal=True,
         key="page",
         label_visibility="collapsed",
@@ -354,6 +357,30 @@ def render_analytics() -> None:
     st.dataframe(filtered_jobs[["job_title", "company", "category", "location", "employment_type", "experience_level", "salary_min", "salary_max"]], use_container_width=True, hide_index=True)
 
 
+def render_feedback() -> None:
+    st.markdown("<div class='eyebrow'>YOUR VOICE</div>", unsafe_allow_html=True)
+    st.title("Share your feedback")
+    st.write("Tell us what worked, what felt confusing, or what would make Pathfinder more useful.")
+    with st.form("feedback_form", clear_on_submit=True):
+        rating = st.radio("How would you rate your experience?", [1, 2, 3, 4, 5], index=4, horizontal=True, format_func=lambda value: f"{value} / 5")
+        message = st.text_area("Your feedback", placeholder="What should we improve?", height=120)
+        contact_column, email_column = st.columns(2)
+        with contact_column:
+            name = st.text_input("Name (optional)")
+        with email_column:
+            email = st.text_input("Email (optional)")
+        submitted = st.form_submit_button("Submit feedback", type="primary")
+    if submitted:
+        if not message.strip():
+            st.warning("Please add a short message before submitting.")
+        else:
+            try:
+                save_feedback(FEEDBACK_PATH, rating, message, name, email)
+                st.success("Thanks for helping us improve Pathfinder.")
+            except OSError:
+                st.error("We could not save your feedback locally. Please try again.")
+
+
 def render_chatbot() -> None:
     if "chat_messages" not in st.session_state:
         st.session_state["chat_messages"] = []
@@ -387,6 +414,8 @@ elif page == "Find Jobs":
     render_find_jobs()
 elif page == "AI Recommendations":
     render_recommendations()
+elif page == "Feedback":
+    render_feedback()
 else:
     render_analytics()
 
