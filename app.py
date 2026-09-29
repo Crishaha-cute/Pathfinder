@@ -11,6 +11,7 @@ from utils.analytics import dashboard_metrics, salary_by_category
 from utils.chatbot import answer_question
 from utils.data_loader import find_dataset, format_salary, load_jobs, non_empty_values
 from utils.feedback import save_feedback
+from utils.interview_coach import evaluate_answer, generate_interview_questions
 from utils.recommender import recommend_jobs
 from utils.semantic_search import build_or_load_index
 
@@ -139,7 +140,7 @@ with header_brand:
 with header_navigation:
     page = st.radio(
         "Navigate",
-        ["Dashboard", "Find Jobs", "AI Recommendations", "Analytics", "Feedback"],
+        ["Dashboard", "Find Jobs", "Job Recommendations", "Interview Coach", "Analytics", "Feedback"],
         horizontal=True,
         key="page",
         label_visibility="collapsed",
@@ -381,6 +382,58 @@ def render_feedback() -> None:
                 st.error("We could not save your feedback locally. Please try again.")
 
 
+def render_interview_coach() -> None:
+    st.markdown("<div class='eyebrow'>PATHFINDER COACH</div>", unsafe_allow_html=True)
+    st.title("Practice for the interview")
+    st.write("Choose a role and Pathfinder Coach will create targeted questions, then coach you through an answer.")
+
+    job_options = jobs["job_id"].tolist()
+    selected_job_id = st.selectbox(
+        "Choose a job",
+        job_options,
+        format_func=lambda job_id: f"{jobs.loc[jobs['job_id'] == job_id, 'job_title'].iloc[0]} · {jobs.loc[jobs['job_id'] == job_id, 'company'].iloc[0]}",
+    )
+    selected_job = {str(key): value for key, value in jobs.loc[jobs["job_id"] == selected_job_id].iloc[0].to_dict().items()}
+    profile = st.text_area(
+        "Your profile",
+        value=st.session_state.get("interview_profile", ""),
+        placeholder="Summarize your experience, projects, and strengths.",
+        height=120,
+    ) or ""
+    if st.button("Generate mock interview", type="primary", disabled=not profile.strip()):
+        with st.spinner("Pathfinder is preparing questions for this role..."):
+            try:
+                st.session_state["interview_profile"] = profile
+                st.session_state["interview_questions"] = generate_interview_questions(selected_job, profile)
+                st.session_state.pop("interview_feedback", None)
+            except Exception as error:
+                st.error(f"Pathfinder could not prepare the interview: {error}")
+
+    questions = st.session_state.get("interview_questions")
+    if not questions:
+        st.info("Add your profile and generate a mock interview to begin.")
+        return
+
+    st.markdown("### Your mock interview")
+    st.markdown(questions)
+    question = st.text_area("Question to practice", placeholder="Paste one question from the mock interview here.", height=90)
+    answer = st.text_area("Your answer", placeholder="Answer as if you were speaking to the interviewer.", height=150)
+    if st.button("Get feedback", disabled=not question.strip() or not answer.strip()):
+        with st.spinner("Pathfinder is reviewing your answer..."):
+            try:
+                st.session_state["interview_feedback"] = evaluate_answer(
+                    selected_job,
+                    question,
+                    answer,
+                    st.session_state.get("interview_profile", profile),
+                )
+            except Exception as error:
+                st.error(f"Pathfinder could not evaluate the answer: {error}")
+    if st.session_state.get("interview_feedback"):
+        st.markdown("### Coach feedback")
+        st.markdown(st.session_state["interview_feedback"])
+
+
 def render_chatbot() -> None:
     if "chat_messages" not in st.session_state:
         st.session_state["chat_messages"] = []
@@ -412,8 +465,10 @@ if page == "Dashboard":
     render_dashboard()
 elif page == "Find Jobs":
     render_find_jobs()
-elif page == "AI Recommendations":
+elif page == "Job Recommendations":
     render_recommendations()
+elif page == "Interview Coach":
+    render_interview_coach()
 elif page == "Feedback":
     render_feedback()
 else:

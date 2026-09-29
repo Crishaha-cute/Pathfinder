@@ -2,6 +2,17 @@
 
 Pathfinder is a local, AI-assisted job finder built with Streamlit. It loads the provided job dataset dynamically, supports jobs across IT and non-IT industries, and recommends roles based on a natural-language profile.
 
+## Target Users
+
+Pathfinder is designed for:
+
+- Students and recent graduates exploring entry-level opportunities
+- Job seekers searching across industries, locations, salaries, and experience levels
+- Career changers identifying roles that match their transferable skills
+- Applicants preparing for interviews with the Gemini Interview Coach
+- Career counselors, educators, and training programs guiding job preparation
+- Recruiters and workforce teams reviewing job market patterns and salary data
+
 ## Features
 
 - Dashboard KPIs for jobs, categories, locations, companies, and salary averages
@@ -11,10 +22,12 @@ Pathfinder is a local, AI-assisted job finder built with Streamlit. It loads the
 - Sort by match, salary, job ID, or title
 - Job cards with details, skills, descriptions, and related jobs
 - AI Recommendations with semantic similarity, skill matching, missing skills, and reasons
+- Gemini Interview Coach with role-specific mock questions and answer feedback
+- Pathfinder Assistant chatbot for questions about jobs, skills, salaries, and locations
 - Transparent match score: 60% semantic similarity, 25% skill similarity, 15% structured preference match
 - Cached local search index under `models/`
 - Feedback page that stores user ratings and comments locally
-- No API key or paid service required
+
 
 A match score is a similarity score between a profile and a job posting. It is not a hiring probability.
 
@@ -31,7 +44,10 @@ JobInsightsAI/
 ├── models/                        # generated embedding/index cache
 └── utils/
     ├── analytics.py
+    ├── chatbot.py
     ├── data_loader.py
+    ├── feedback.py
+    ├── interview_coach.py
     ├── recommender.py
     └── semantic_search.py
 ```
@@ -69,23 +85,6 @@ streamlit run app.py
 ```
 
 The first installation includes `sentence-transformers` and may download `all-MiniLM-L6-v2` when that model is first used. After the model is downloaded, the app can run offline. If the embedding package or model is unavailable, Pathfinder automatically uses a cached NumPy TF-IDF semantic index so the application remains usable.
-
-## Semantic Search
-
-Each posting is converted into one searchable text document containing its title, category, skills, description, location, experience level, and employment type. The query is compared with those documents and ranked by similarity. Recommendations combine that ranking with detected skill overlap and structured preference matches.
-
-The generated cache is stored in `models/embeddings.npz` with metadata in `models/embeddings.json`. The cache is automatically rebuilt when the CSV content changes.
-
-Feedback submitted through the Feedback page is appended to `data/feedback.csv`.
-That file is intentionally ignored by Git because it may contain optional names
-and email addresses.
-
-To rebuild it manually, delete the generated files and restart Streamlit:
-
-```powershell
-Remove-Item models\embeddings.npz, models\embeddings.json -ErrorAction SilentlyContinue
-streamlit run app.py
-```
 
 ## Example Queries
 
