@@ -1,6 +1,6 @@
 # Pathfinder Job Finder
 
-Pathfinder is a local, AI-assisted job finder built with Streamlit. It loads the provided job dataset dynamically, supports jobs across IT and non-IT industries, and recommends roles based on a natural-language profile.
+Pathfinder AI-assisted job finder built with Streamlit. It loads the provided job dataset dynamically, supports jobs across IT and non-IT industries, and recommends roles based on a natural-language profile.
 
 ## Target Users
 
