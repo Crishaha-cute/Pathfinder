@@ -3,7 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 
-MODEL_NAME = "gemini-3.5-flash"
+MODEL_NAME = "gemini-3.5-flash-lite"
 
 
 def _api_key() -> str:
